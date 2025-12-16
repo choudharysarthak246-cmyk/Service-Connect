@@ -1081,7 +1081,7 @@
             }
         },
 
-        submitProApplication: (e) => {
+        submitProApplication: async (e) => {
             e.preventDefault();
             const form = e.target;
 
@@ -1094,7 +1094,6 @@
             const accountNumber = form.querySelector('[name="accountNumber"]').value;
 
             const data = {
-                id: Date.now(),
                 name: `${fname} ${lname}`,
                 category: category,
                 rate: rate,
@@ -1104,14 +1103,29 @@
             };
 
             // Update User Name if "User"
-            if(store.user.name === 'User') {
+            if(store.user && store.user.name === 'User') {
                 store.user.name = data.name;
                 localStorage.setItem('sc_current_user', JSON.stringify(store.user));
             }
 
-            store.addProRequest(data); // Send to pending
-            modals.closeAll();
-            ui.toast('Application sent for approval');
+            try {
+                const response = await fetch(`${auth.apiBase}/pro-request`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    store.addProRequest(data); // Optimistic UI or fetch from backend later
+                    modals.closeAll();
+                    ui.toast('Application sent for approval');
+                } else {
+                    ui.toast('Failed to send application', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                ui.toast('Network error', 'error');
+            }
         }
     };
 

@@ -31,6 +31,8 @@ try {
 const otpStore = new Map();
 // mobile -> lastRequestTime (timestamp)
 const rateLimitStore = new Map();
+// list of pro requests
+const proRequests = [];
 
 // Constants
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
@@ -129,6 +131,35 @@ app.post('/api/verify-otp', (req, res) => {
     );
 
     res.json({ success: true, token, message: 'Login successful' });
+});
+
+// 3. Pro Request
+app.post('/api/pro-request', (req, res) => {
+    const data = req.body;
+
+    // Basic validation
+    if (!data.name || !data.category || !data.mobile) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Add ID and status
+    const request = {
+        ...data,
+        id: Date.now(),
+        status: 'pending',
+        timestamp: new Date().toISOString()
+    };
+
+    proRequests.push(request);
+    console.log('New Pro Request:', request);
+
+    res.json({ success: true, message: 'Pro request submitted successfully' });
+});
+
+// 4. Get Pro Requests (for Admin)
+app.get('/api/pro-requests', (req, res) => {
+    // In a real app, check admin token here
+    res.json(proRequests);
 });
 
 // Start Server
